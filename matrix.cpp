@@ -93,8 +93,8 @@ class matrix{
 		
 		//= operator
 		void operator = (const matrix &x){
-			int n = x.n;
-			int m = x.m;
+			n = x.n;
+			m = x.m;
 			
 			a = new double*[n];
 			for(int i=0;i<n;i++){
@@ -154,6 +154,8 @@ matrix transpose(matrix A){
 
 matrix multiply(matrix A, matrix B){
 	matrix result(A.n, B.m);
+	//cout<<"A: "<<A.n<<","<<A.m<<endl;
+	//cout<<"B: "<<B.n<<","<<B.m<<endl;
 	for(int i=0;i<A.n;i++){
 		for(int j=0;j<B.m;j++){
 			for(int k=0;k<A.m;k++){
@@ -164,8 +166,7 @@ matrix multiply(matrix A, matrix B){
 	return result;	
 }
 
-double sigmoid(double x){
-	cout<<1.0/(1.0+exp(-x))<<endl;
+double sigmoid_single(double x){
 	return 1.0/(1.0+exp(-x));
 }
 
@@ -177,8 +178,7 @@ matrix sigmoid(matrix a){
 	matrix result(a.n, a.m);
 	for(int i=0;i<a.n;i++){
 		for(int j=0;j<a.m;j++){
-			result[i][j] = sigmoid(a[i][j]);
-			cout<<"reached"<<endl;
+			result[i][j] = sigmoid_single(a[i][j]);
 		}
 	}
 	return result;		
@@ -213,8 +213,11 @@ class neural_network{
 			delta_w.resize(n-1);
 			delta_b.resize(n-1);
 			
+			
 			for(int i=0; i<n-1; i++){
+				cout<<size[i]<<","<<size[i+1]<<endl;
 				w[i] = matrix(size[i], size[i+1]);
+				cout<<w[i].n<<","<<w[i].m<<endl;
 				b[i] = matrix(1, size[i+1]);
 				delta_w[i] = matrix(size[i], size[i+1]);
 				delta_b[i] = matrix(1, size[i+1]);
@@ -223,6 +226,7 @@ class neural_network{
 				b[i].randomize();
 			}
 			
+			cout<<"w: "<<w.size()<<endl;
 			learning_rate = alpha;
 		}
 		
@@ -239,13 +243,12 @@ class neural_network{
 			int i;
 			
 			l.push_back(input);
-			for(int i=0; i<=n;i++){
+			for(int i=0; i<n-1;i++){
 				input = sigmoid(add(multiply(input, w[i]), b[i]));
 				l.push_back(input);
 			}
-			
+
 			delta = element_wise_mult(subtract(input, output), sigmoid_derivative(l[n-1]));
-			
 			delta_b[n-2].add(delta);
 			delta_w[n-2].add(multiply(transpose(l[n-2]), delta));
 			
@@ -263,7 +266,7 @@ class neural_network{
 				delta_w[i].zero();
 				delta_b[i].zero();
 			}
-
+			
 			for(int i=0; i<(int)(inputs.size()); i++){
 				backpropagation(inputs[i], outputs[i]);
 			}
@@ -276,10 +279,10 @@ class neural_network{
 					}
 				}
 			}
-			
+
 			for(int i=0;i<n-1;i++){
-				for(int j=0; j<delta_w[i].n;j++){
-					for(int z=0; z<delta_w[i].m;z++){
+				for(int j=0; j<delta_b[i].n;j++){
+					for(int z=0; z<delta_b[i].m;z++){
 						delta_b[i][j][z] /= (double)(inputs.size());
 						b[i][j][z] -= learning_rate*delta_b[i][j][z];
 					}
@@ -351,7 +354,7 @@ void random_shuffle(vector <int> &v){
 
 void train(){
 	vector <int> units;
-	units.push_back(754);
+	units.push_back(784);
 	units.push_back(15);
 	units.push_back(10);
 	neural_network net(units, 1.0);
@@ -359,14 +362,16 @@ void train(){
 	int epoch;
 	vector <int> idx;
 	vector <matrix> inputs, outputs;
+	matrix curr_output;
+	double error;
 	
 	for(int i=0; i<42000;i++){
 		idx.push_back(i);
 	}
 	
-	for(epoch=1;epoch<=10;epoch++){
+	for(epoch=1;epoch<=1;epoch++){
 		cout<<"Epoch: "<<epoch<<endl;
-		
+		error = 0.0;
 		random_shuffle(idx);
 		for(int i=0;i<42000;i+=BATCH_SIZE){
 			inputs.clear();
@@ -377,12 +382,49 @@ void train(){
 				outputs.push_back(train_output[idx[i+j]]);
 			}
 			net.train(inputs, outputs);
-			cout<<i<<" batch finished."<<endl;
 		}
+		
+		for(int i=0;i<42000;i++){
+			curr_output = net.forward_prop(train_input[i]);
+			
+			for(int j=0;j<10;j++){
+				error += (curr_output[0][j]-train_output[i][0][j])*(curr_output[0][j]-train_output[i][0][j]);
+			}
+		}
+		
+		error /= 10.0;
+		error /= 42000.0;
+		
 		cout<<"Epoch: "<<epoch<<" finished."<<endl;
+		cout<<"Error: "<<error<<endl;
 		time_stamp();
 		cout<<endl;
 	}
+	//save weight
+	ofstream OUT("weights.txt");
+	cout<<"w size "<<net.w.size()<<endl;
+	for(int i=0; i<net.w.size();i++){
+		cout<<"i: "<<i<<endl;
+		OUT<<"w["<<i<<"]"<<endl;
+		for(int j=0; j<net.w[i].n;j++){
+			for(int k=0; k<net.w[i].m;j++){
+				OUT<<net.w[i][j][k]<<",";
+			}
+			OUT<<endl;
+			cout<<"w["<<i<<"] read"<<endl;
+		}
+	}
+	
+	for(int i=0; i<net.b.size();i++){
+		OUT<<"b["<<i<<"]"<<endl;
+		for(int j=0; j<net.b[i].n;j++){
+			for(int k=0; k<net.b[i].m;j++){
+				OUT<<net.b[i][j][k]<<",";
+			}
+			OUT<<endl;
+		}
+	}
+	OUT.close();
 }
 
 int main(){
