@@ -1,4 +1,5 @@
 #include <iostream>
+#include <conio.h>
 #include <math.h>
 #include <vector>
 #include <fstream>
@@ -105,6 +106,7 @@ class matrix{
 			}
 		}
 		
+		
 		//matrix[i][j]
 		double* operator [] (const int &idx){
 			return a[idx];
@@ -149,6 +151,7 @@ matrix transpose(matrix A){
 			result[j][i] = A[i][j];
 		}
 	}
+	
 	return result;	
 }
 
@@ -163,11 +166,12 @@ matrix multiply(matrix A, matrix B){
 			}
 		}
 	}
+
 	return result;	
 }
 
 double sigmoid_single(double x){
-	return 1.0/(1.0+exp(-x));
+	return 1.0 / (1.0+exp(-x));
 }
 
 double sigmoid_derivative(double x){
@@ -205,7 +209,7 @@ class neural_network{
 		
 		neural_network(vector <int> sz, double alpha){
 			int i;
-			n= (int)sz.size();
+			n= (int)(sz.size());
 			size = sz;
 			
 			w.resize(n-1);
@@ -215,9 +219,7 @@ class neural_network{
 			
 			
 			for(int i=0; i<n-1; i++){
-				cout<<size[i]<<","<<size[i+1]<<endl;
 				w[i] = matrix(size[i], size[i+1]);
-				cout<<w[i].n<<","<<w[i].m<<endl;
 				b[i] = matrix(1, size[i+1]);
 				delta_w[i] = matrix(size[i], size[i+1]);
 				delta_b[i] = matrix(1, size[i+1]);
@@ -226,11 +228,11 @@ class neural_network{
 				b[i].randomize();
 			}
 			
-			cout<<"w: "<<w.size()<<endl;
 			learning_rate = alpha;
 		}
 		
-		matrix forward_prop(matrix input){
+		matrix forward_prop(matrix &input){
+			
 			for(int i=0; i<n-1; i++){
 				input = sigmoid(add(multiply(input, w[i]), b[i]));
 			}
@@ -247,11 +249,11 @@ class neural_network{
 				input = sigmoid(add(multiply(input, w[i]), b[i]));
 				l.push_back(input);
 			}
-
+			
 			delta = element_wise_mult(subtract(input, output), sigmoid_derivative(l[n-1]));
 			delta_b[n-2].add(delta);
 			delta_w[n-2].add(multiply(transpose(l[n-2]), delta));
-			
+
 			for(int i=n-3; i>=0; i--){
 				delta = multiply(delta, transpose(w[i+1]));
 				delta = element_wise_mult(delta, sigmoid_derivative(l[i+1]));
@@ -270,7 +272,7 @@ class neural_network{
 			for(int i=0; i<(int)(inputs.size()); i++){
 				backpropagation(inputs[i], outputs[i]);
 			}
-			
+
 			for(int i=0;i<n-1;i++){
 				for(int j=0; j<delta_w[i].n;j++){
 					for(int z=0; z<delta_w[i].m;z++){
@@ -278,9 +280,9 @@ class neural_network{
 						w[i][j][z] -= learning_rate*delta_w[i][j][z];
 					}
 				}
-			}
+			
 
-			for(int i=0;i<n-1;i++){
+
 				for(int j=0; j<delta_b[i].n;j++){
 					for(int z=0; z<delta_b[i].m;z++){
 						delta_b[i][j][z] /= (double)(inputs.size());
@@ -355,7 +357,7 @@ void random_shuffle(vector <int> &v){
 void train(){
 	vector <int> units;
 	units.push_back(784);
-	units.push_back(15);
+	//units.push_back(15);
 	units.push_back(10);
 	neural_network net(units, 1.0);
 	
@@ -369,7 +371,7 @@ void train(){
 		idx.push_back(i);
 	}
 	
-	for(epoch=1;epoch<=1;epoch++){
+	for(epoch=1;epoch<=10;epoch++){
 		cout<<"Epoch: "<<epoch<<endl;
 		error = 0.0;
 		random_shuffle(idx);
@@ -402,31 +404,48 @@ void train(){
 	}
 	//save weight
 	ofstream OUT("weights.txt");
-	cout<<"w size "<<net.w.size()<<endl;
-	for(int i=0; i<net.w.size();i++){
-		cout<<"i: "<<i<<endl;
-		OUT<<"w["<<i<<"]"<<endl;
-		for(int j=0; j<net.w[i].n;j++){
-			for(int k=0; k<net.w[i].m;j++){
-				OUT<<net.w[i][j][k]<<",";
-			}
-			OUT<<endl;
-			cout<<"w["<<i<<"] read"<<endl;
+	OUT<<"w[0]"<<endl;
+	for(int i=0; i<net.w[0].n; i++){
+		for(int j=0; j<net.w[0].m;j++){
+			OUT<<net.w[0][i][j]<<",";
 		}
 	}
+	cout<<"Done w[0]"<<endl;
+	OUT<<"\n";
 	
-	for(int i=0; i<net.b.size();i++){
-		OUT<<"b["<<i<<"]"<<endl;
-		for(int j=0; j<net.b[i].n;j++){
-			for(int k=0; k<net.b[i].m;j++){
-				OUT<<net.b[i][j][k]<<",";
-			}
-			OUT<<endl;
+	OUT<<"w[1]"<<endl;
+	for(int i=0; i<net.w[1].n; i++){
+		for(int j=0; j<net.w[1].m;j++){
+			OUT<<net.w[1][i][j]<<",";
 		}
 	}
+	cout<<"Done w[1]"<<endl;
+	OUT<<"\n";
+	
+	OUT<<"b[0]"<<endl;
+	for(int i=0; i<net.b[0].n; i++){
+		for(int j=0; j<net.b[0].m;j++){
+			OUT<<net.b[0][i][j]<<",";
+		}
+	}
+	cout<<"Done b[0]"<<endl;
+	OUT<<"\n";
+	
+	OUT<<"b[1]"<<endl;
+	for(int i=0; i<net.b[1].n; i++){
+		for(int j=0; j<net.b[1].m;j++){
+			OUT<<net.b[1][i][j]<<",";
+		}
+	}
+	cout<<"Done b[1]"<<endl;
+	OUT<<"\n";
+	
+
 	OUT.close();
 }
 
+
+	
 int main(){
 	parse_training_data();
 	train();
