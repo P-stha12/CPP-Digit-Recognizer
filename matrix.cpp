@@ -162,11 +162,10 @@ matrix multiply(matrix A, matrix B){
 	for(int i=0;i<A.n;i++){
 		for(int j=0;j<B.m;j++){
 			for(int k=0;k<A.m;k++){
-				result[i][j] = A[i][k] + B[k][j];
+				result[i][j] += A[i][k] * B[k][j];
 			}
 		}
 	}
-
 	return result;	
 }
 
@@ -231,7 +230,7 @@ class neural_network{
 			learning_rate = alpha;
 		}
 		
-		matrix forward_prop(matrix &input){
+		matrix forward_prop(matrix input){
 			
 			for(int i=0; i<n-1; i++){
 				input = sigmoid(add(multiply(input, w[i]), b[i]));
@@ -264,15 +263,15 @@ class neural_network{
 		}
 		
 		void train(vector <matrix> inputs, vector <matrix> outputs){
-			for(int i=0; i<=n-1; i++){
+			for(int i=0; i<n-1; i++){
 				delta_w[i].zero();
 				delta_b[i].zero();
 			}
-			
+
 			for(int i=0; i<(int)(inputs.size()); i++){
 				backpropagation(inputs[i], outputs[i]);
 			}
-
+			
 			for(int i=0;i<n-1;i++){
 				for(int j=0; j<delta_w[i].n;j++){
 					for(int z=0; z<delta_w[i].m;z++){
@@ -357,7 +356,7 @@ void random_shuffle(vector <int> &v){
 void train(){
 	vector <int> units;
 	units.push_back(784);
-	//units.push_back(15);
+	units.push_back(15);
 	units.push_back(10);
 	neural_network net(units, 1.0);
 	
@@ -370,7 +369,6 @@ void train(){
 	for(int i=0; i<42000;i++){
 		idx.push_back(i);
 	}
-	
 	for(epoch=1;epoch<=10;epoch++){
 		cout<<"Epoch: "<<epoch<<endl;
 		error = 0.0;
